@@ -3,7 +3,7 @@ import hashlib
 import textwrap
 import numpy as np 
 import math
-img = Image.open('image_encryp/images.jpg')
+img = Image.open('image_encryp/images.png')
 m, n = img.size
 width, height = m, n
 print("pixels: {0}  width: {2} height: {1} ".format(m*n, m, n))
@@ -18,8 +18,15 @@ for y in range(n):
 key = hashlib.sha512()                      #key is made a hash.sha256 object 
 key.update(bytearray(plainimage))           #image data is fed to generate digest
 key=key.hexdigest() 
+# print(key)
+
+file1 = open("image_encryp/HexDigest.txt","w")
+file1.write(key)                            #storing hex digest in a file
+file1.close()
+
 key_bin = bin(int(key, 16))[2:].zfill(256)  #converting  in binary sequence
-print (len(key_bin))                        #checking 256 character in hash key
+# print (key_bin)                        #checking 256 character in hash key
+
 
 pxs = []
 for y in range(m):
@@ -28,16 +35,18 @@ for y in range(m):
 
 ans = [list(i) for i in pxs]
 imgl = [list(i) for i in ans]
-print (len(ans))
+# print (len(ans))
+
 
 tmp = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(tmp)
-image.save('image_encryp/original.jpg')
+image.save('image_encryp/original.png')
 print("Saved original.")
 
-original = imgl
+# original = [[imgl[i][k] for k in range(3)] for i in range(256*256)]
+# print(original[0])
 
 
 #-----------------GEnerating chaotic sequence----------------------------------
@@ -147,16 +156,19 @@ imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/2.jpg')
-print("Saved image2.")
+image.save('image_encryp/2.png')
+print("Saved image2 after hill encryption.")
 
+print("before pixel scrambling")
+# for i in range(0,16):
+#     print(imgl[i][0])
 
 # ----------------------------scramble the pixel position 1st & generate I3-----------------
 
 
 po = 10**8
-for i in range(1, 256):
-    for j in range(1, 256):
+for i in range(0, 256):
+    for j in range(0, 256):
         for k in range(3):
             i1 = i + (int(math.floor(b1[i*256+j]*po)) % (height-i))
             j1 = j + (int(math.floor(b1[i*256+j]*po)) % (width-j))
@@ -167,115 +179,8 @@ imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/3.jpg')
-print("Saved image3.")
-
-# ------------------------------------------DECRYPT Pixel Scrambling-------------------------
-
-# po = 10**8
-# for i in range(255,-1,-1):
-#     for j in range(255,-1,-1):
-#         for k in range(3):
-#             i1 = i + (int(math.floor(b1[i*256+j]*po)) % (height-i))
-#             j1 = j + (int(math.floor(b1[i*256+j]*po)) % (width-j))
-#             imgl[i*height+j][k],imgl[i1*height+j1][k] = imgl[i1*height+j1][k],imgl[i*height+j][k]
-
-
-# imgl1 = [tuple(i) for i in imgl]
-# OUTPUT_IMAGE_SIZE = (256, 256)
-# image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
-# image.putdata(imgl1)
-# image.save('image_encryp/dec3.jpg')
-# print("Saved dec 3.")
-
-# ------------------------------------------END OF DECRYPT Pixel Scrambling-------------------------
-# ------------------------------------------DECRYPT Hill Cypher-------------------------
-
-# for i in range(0,65536,4):
-#     for j in range(0,3):
-        
-#         Q=([imgl[i][j]], [imgl[i+1][j]], [imgl[i+2][j]], [imgl[i+3][j]])
-        
-#         M = ([b4[i+0],b4[i+1],1-b4[i+0], -b4[i+1]], [b4[i+2], b4[i+3], -b4[i+2], 1-b4[i+3]], [1+b4[i+0], b4[i+1], -b4[i+0], -b4[i+1]], [b4[i+2], 1+b4[i+3],-b4[i+2], -b4[i+3]])
-
-#         res = np.dot(M,Q)
-
-#         imgl[i][j]=int(res[0][0]%256)
-#         imgl[i+1][j]= int(res[1][0]%256)
-#         imgl[i+2][j]= int(res[2][0]%256)
-#         imgl[i+3][j] = int(res[3][0]%256)
-        
-# imgl1 = [tuple(i) for i in imgl]
-# OUTPUT_IMAGE_SIZE = (256, 256)
-# image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
-# image.putdata(imgl1)
-# image.save('image_encryp/dec2.jpg')
-# print("Saved image decrypted 2.")
-
-
-# -----------------------------------END OF DECRYPT Hill Cypher-------------------------
-
-
-#----------------------------------------Analysis----------------------------------------------
-
-
-#----------------------------------------Histgram-----------------------------
-import matplotlib
-import matplotlib.pyplot as plt
-from numpy import cov
-
-x = [0 for i in range(256*256)]
-
-for i in range(256):
-    for j in range(256):
-        x[i*256+j]=imgl[i*256+j][0]
-
-n, bins, patches = plt.hist(x=x, bins=256, color='#0504aa',alpha=0.7, rwidth=0.85)
-
-plt.grid(axis='y', alpha=0.75)
-plt.xlabel('pixel value (for red in RGB)')
-plt.ylabel('Frequency')
-plt.title('Histogram for Encrypted image')
-maxfreq = n.max()
-plt.show()
-#------------------------------------End of Histgram-----------------------------
-
-#--------------------------------------Correlation---------------------------------
-
-# x=[i for i in range(256*256)]
-# data1 = [0 for i in range(256*256)]
-# data2 = [0 for i in range(256*256)]
-
-# for i in range(256*256-1):
-#     if (i%256)==255:
-#         continue
-#     data1[i]=(0.3*original[i][0]+0.59*original[i][1]+0.11*original[i][2])
-#     data2[i]=(0.3*original[i+1][0]+0.59*original[i+1][1]+0.11*original[i+1][2])
-
-# print(data1)
-# print(data2)
-# print(cov(data1, data2))
-# plt.scatter(data1,data2)
-# plt.show()
-
-# n, bins, patches = plt.hist(x=data1, bins=256, color='#0504aa',alpha=0.7, rwidth=0.85)
-
-# plt.grid(axis='y', alpha=0.75)
-# plt.xlabel('pixel value (for red in RGB)')
-# plt.ylabel('Frequency')
-# plt.title('Histogram for plain image')
-# maxfreq = n.max()
-
-# plt.plot(x,data1)
-# plt.plot(x,data2)
-# plt.show()
-
-
-
-#----------------End of Correlation---------------------------------
-
-
-#---------------------------------------- End Of Analysis----------------------------------------------
+image.save('image_encryp/3.png')
+print("Saved image scramble the pixel position 3")
 
 
 # ---------------------------DNA Encdoing Rules-----------------------------------------
@@ -379,6 +284,8 @@ for i in range(0,65536,8):
             g4 = dna[rr].get(s4)
             g5 = dna[rr].get(s5)
             xx = xx+ (g2+g3+g4+g5)
+
+        # Fiestal one round
         L=xx[0:16]
         R=xx[16:]    
         # print(L)
@@ -409,26 +316,27 @@ imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/4.jpg')
-print("Saved image4.")
+image.save('image_encryp/4.png')
+print("Saved image dna encoding fiestal dna decoding 4.")
+
 
 # ----------------------------scramble the pixel position 2nd & generate I5-----------------
-ans = [list(i) for i in imgl]
-# print (ans[0])
-# print (imgl[0])
-po = 10**15
-for i in range(1, 256):
-    for j in range(1, 256):
-        i1 = (i + int(math.floor(b1[i]*po)) % (height-i))
-        j1 = (j + int(math.floor(b1[i]*po)) % (width-j))
-        imgl[i*height+j][0], imgl[i*height+j][1], imgl[i*height+j][2] =  ans[i1 * height + j1][0], ans[i1 * height + j1][1], ans[i1 * height + j1][2]
+
+po = 10**8
+for i in range(0, 256):
+    for j in range(0, 256):
+        for k in range(3):
+            i1 = i + (int(math.floor(b2[i*256+j]*po)) % (height-i))
+            j1 = j + (int(math.floor(b2[i*256+j]*po)) % (width-j))
+            imgl[i*height+j][k],imgl[i1*height+j1][k] = imgl[i1*height+j1][k],imgl[i*height+j][k]
+
 
 imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/5.jpg')
-print("Saved image5.")
+image.save('image_encryp/5.png')
+print("Saved image scramble the pixel position 5.")
 
 # ----------------------------[DNA Encoding->Feistel transformation -> DNA Decoding](round 2)------------------
 for i in range(0,65536,8):
@@ -491,25 +399,28 @@ imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/6.jpg')
-print("Saved image6.")
+image.save('image_encryp/6.png')
+print("Saved image dna encoding fiestal dna decoding 6.")
 
 # ----------------------------scramble the pixel position 3rdd & generate I7-----------------
 
-ans = [list(i) for i in imgl]
-po = 10**15
-for i in range(1, 256):
-    for j in range(1, 256):
-        i1 = (i + int(math.floor(b1[i]*po)) % (height-i))
-        j1 = (j + int(math.floor(b1[i]*po)) % (width-j))
-        imgl[i*height+j][0], imgl[i*height+j][1], imgl[i*height+j][2] =  ans[i1 * height + j1][0], ans[i1 * height + j1][1], ans[i1 * height + j1][2]
+po = 10**8
+for i in range(0, 256):
+    for j in range(0, 256):
+        for k in range(3):
+            i1 = i + (int(math.floor(b3[i*256+j]*po)) % (height-i))
+            j1 = j + (int(math.floor(b3[i*256+j]*po)) % (width-j))
+            imgl[i*height+j][k],imgl[i1*height+j1][k] = imgl[i1*height+j1][k],imgl[i*height+j][k]
+
 
 imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/7.jpg')
-print("Saved image7.")
+image.save('image_encryp/7.png')
+print("Saved image scramble the pixel position 7.")
+
+
 
 # ----------------------------[DNA Encoding->Feistel transformation -> DNA Decoding](round 3)------------------
 for i in range(0,65536,8):
@@ -572,33 +483,122 @@ imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/8.jpg')
-print("Saved image8.")
+image.save('image_encryp/8.png')
+print("Saved image dna encoding fiestal dna decoding 8.")
 
 #--------------------------------------Ciphertext diffusion--------------------------------------------
 
-for i in range(0,10):
+for i in range(0,65536):
     for j in range(3):
         if(i==0):
             imgl[i][j]= 127 ^ imgl[i][j]
         else:
             imgl[i][j]= imgl[i-1][j] ^ imgl[i][j]
 
-# print (imgl[0])
-# print (imgl[1])
-
-# print (imgl[2])
-# print (imgl[3])
-
-# print (imgl[4])
-# print (imgl[5])
-
-# print (imgl[6])
-# print (imgl[7])
 
 imgl1 = [tuple(i) for i in imgl]
 OUTPUT_IMAGE_SIZE = (256, 256)
 image = Image.new('RGB', OUTPUT_IMAGE_SIZE)
 image.putdata(imgl1)
-image.save('image_encryp/9.jpg')
-print("Saved image9.")
+image.save('image_encryp/9.png')
+print("Saved image Ciphertext diffusion 9.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#----------------------------------------Analysis----------------------------------------------
+
+
+#----------------------------------------Histgram-----------------------------
+# import matplotlib
+# import matplotlib.pyplot as plt
+# from numpy import cov
+
+# x = [0 for i in range(256*256)]
+
+# if imgl==original:
+#     print("equal")
+
+# print(original[0])
+# print(imgl[0])
+
+# for i in range(256):
+#     for j in range(256):
+#         x[i*256+j]=original[i*256+j][0]
+
+# n, bins, patches = plt.hist(x=x, bins=256, color='#0504aa',alpha=0.7, rwidth=0.85)
+
+# plt.grid(axis='y', alpha=0.75)
+# plt.xlabel('pixel value (for red in RGB)')
+# plt.ylabel('Frequency')
+# plt.title('Histogram for Encrypted image')
+# maxfreq = n.max()
+# plt.show()
+
+
+#------------------------------------End of Histgram-----------------------------
+
+#--------------------------------------Correlation---------------------------------
+
+# x=[i for i in range(2500)]
+# data1 = [0 for i in range(2500)]
+# data2 = [0 for i in range(2500)]
+
+# for i in range(2500-256-1):
+#     if (i%256)==255:
+#         continue
+#     data1[i]=imgl[i][0]
+#     data2[i]=imgl[(i+1)][0]
+
+# s = [4 for n in range(len(x))]
+# plt.scatter(data1,data2,s=s)
+# plt.show()
+
+# quit()
+
+# n, bins, patches = plt.hist(x=data1, bins=256, color='#0504aa',alpha=0.7, rwidth=0.85)
+
+# plt.grid(axis='y', alpha=0.75)
+# plt.xlabel('pixel value (for red in RGB)')
+# plt.ylabel('Frequency')
+# plt.title('Histogram for plain image')
+# maxfreq = n.max()
+
+# plt.plot(x,data1)
+# plt.plot(x,data2)
+# plt.show()
+
+
+
+#----------------End of Correlation---------------------------------
+
+
+#---------------------------------------- End Of Analysis----------------------------------------------
